@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  googleId      String?  @unique
+  email         String   @unique
+  name          String?
+  username      String   @unique
+  avatarUrl     String?
+  credit        Int      @default(2)
+  surveysFilled Int      @default(0)
+  surveysPosted Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  surveys       Survey[]
+  clicks        SurveyClick[]
+  reports       Report[]
+  creditLogs    CreditLog[]
+}
+
+model Survey {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  title            String
+  description      String?
+  category         String
+  targetRespondent String?
+  deadline         DateTime?
+  googleFormLink   String
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+
+  user             User     @relation(fields: [userId], references: [id])
+  clicks           SurveyClick[]
+  reports          Report[]
+}
+
+model SurveyClick {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  surveyId  Int
+  clickedAt DateTime  @default(now())
+  claimedAt DateTime?
+
+  user      User      @relation(fields: [userId], references: [id])
+  survey    Survey    @relation(fields: [surveyId], references: [id])
+
+  @@unique([userId, surveyId])
+}
+
+model CreditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  amount      Int
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  surveyId  Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  survey    Survey   @relation(fields: [surveyId], references: [id])
+}
