@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Survey = {
   id: number;
@@ -10,9 +11,11 @@ type Survey = {
   targetRespondent: string | null;
   googleFormLink: string;
   isClaimed?: boolean;
+  isOwner?: boolean;
 };
 
 export default function SurveySection() {
+  const router = useRouter();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
@@ -78,6 +81,27 @@ export default function SurveySection() {
     alert(data.message);
   }
 
+  async function deleteSurvey(surveyId: number) {
+  const yakin = confirm("Yakin mau hapus survei ini?");
+
+  if (!yakin) return;
+
+  const res = await fetch(`/api/surveys/${surveyId}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.message || "Gagal menghapus survei");
+    return;
+  }
+
+  setSurveys((prev) => prev.filter((survey) => survey.id !== surveyId));
+
+  alert(data.message || "Survey berhasil dihapus");
+}
+
   return (
     <section className="pageSection">
       <div className="sectionHeader">
@@ -136,6 +160,18 @@ export default function SurveySection() {
                   ? "Sudah Diisi"
                   : "Sudah Mengisi"}
               </button>
+
+                {survey.isOwner && (
+    <>
+      <button onClick={() => router.push(`/surveys/edit/${survey.id}`)}>
+        Edit
+      </button>
+
+      <button onClick={() => deleteSurvey(survey.id)}>
+        Delete
+      </button>
+    </>
+  )}
             </div>
           </article>
         ))}

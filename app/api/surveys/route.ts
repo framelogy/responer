@@ -28,10 +28,15 @@ export async function GET() {
     },
   });
 
-  const result = surveys.map((survey) => ({
+const result = surveys.map((survey) => {
+  const clicks = "clicks" in survey ? survey.clicks : [];
+
+  return {
     ...survey,
-    isClaimed: Array.isArray(survey.clicks) && survey.clicks.length > 0,
-  }));
+    isClaimed: Array.isArray(clicks) && clicks.length > 0,
+    isOwner: user ? survey.userId === user.id : false,
+  };
+});
 
   return NextResponse.json(result);
 }

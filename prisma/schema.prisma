@@ -19,14 +19,14 @@ model User {
   surveysPosted Int      @default(0)
   createdAt     DateTime @default(now())
 
-  surveys       Survey[]
-  clicks        SurveyClick[]
-  reports       Report[]
-  creditLogs    CreditLog[]
+  surveys    Survey[]
+  clicks     SurveyClick[]
+  reports    Report[]
+  creditLogs CreditLog[]
 }
 
 model Survey {
-  id               Int      @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   userId           Int
   title            String
   description      String?
@@ -34,12 +34,15 @@ model Survey {
   targetRespondent String?
   deadline         DateTime?
   googleFormLink   String
-  status           String   @default("active")
-  createdAt        DateTime @default(now())
+  status           String    @default("active")
+  createdAt        DateTime  @default(now())
 
-  user             User     @relation(fields: [userId], references: [id])
-  clicks           SurveyClick[]
-  reports          Report[]
+  deletedAt DateTime?
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id])
+  clicks  SurveyClick[]
+  reports Report[]
 }
 
 model SurveyClick {
@@ -49,8 +52,8 @@ model SurveyClick {
   clickedAt DateTime  @default(now())
   claimedAt DateTime?
 
-  user      User      @relation(fields: [userId], references: [id])
-  survey    Survey    @relation(fields: [surveyId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  survey Survey @relation(fields: [surveyId], references: [id])
 
   @@unique([userId, surveyId])
 }
@@ -63,7 +66,7 @@ model CreditLog {
   description String?
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Report {
@@ -73,6 +76,6 @@ model Report {
   reason    String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
-  survey    Survey   @relation(fields: [surveyId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  survey Survey @relation(fields: [surveyId], references: [id])
 }
