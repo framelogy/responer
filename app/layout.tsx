@@ -1,5 +1,10 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
 import SessionWrapper from "../components/SessionWrapper";
+
+const inter = Inter({
+  subsets: ["latin"],
+});
 
 export default function RootLayout({
   children,
@@ -8,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body>
+      <body className={inter.className}>
         <SessionWrapper>{children}</SessionWrapper>
       </body>
     </html>

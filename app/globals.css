@@ -10,11 +10,25 @@ html {
 
 body {
   min-height: 100vh;
-  font-family: Arial, Helvetica, sans-serif;
-  color: #0f172a;
+  font-family: Inter, sans-serif;
+
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 32%),
-    linear-gradient(135deg, #f8fbff 0%, #eef6ff 45%, #dbeafe 100%);
+    radial-gradient(circle at top left,
+      rgba(59,130,246,0.25),
+      transparent 30%),
+
+    radial-gradient(circle at top right,
+      rgba(139,92,246,0.25),
+      transparent 30%),
+
+    linear-gradient(
+      135deg,
+      #f8fbff 0%,
+      #eef4ff 50%,
+      #f5f3ff 100%
+    );
+
+  color: #0f172a;
 }
 
 button,
@@ -192,11 +206,20 @@ a {
 }
 
 .surveyCard {
-  padding: 26px;
+  background: rgba(255,255,255,0.85);
+
+  backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255,255,255,0.4);
+
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid #dbeafe;
-  box-shadow: 0 20px 60px rgba(37, 99, 235, 0.12);
+
+  padding: 24px;
+
+  transition: .25s;
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,.05);
 }
 
 .badge {
@@ -400,4 +423,58 @@ a {
   background: rgba(255, 255, 255, 0.15);
   color: white;
   border-color: rgba(255, 255, 255, 0.35);
+}
+.surveyCard:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 20px 60px rgba(37,99,235,.15);
+}
+.searchBar {
+  height: 58px;
+
+  border-radius: 999px;
+
+  padding: 0 22px;
+
+  border: none;
+
+  background: white;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.05);
+}
+.categoryChip {
+  border-radius:999px;
+  padding:12px 18px;
+
+  background:white;
+
+  cursor:pointer;
+}
+
+.categoryChip.active {
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #3b82f6
+    );
+
+  color:white;
+}
+.completedBadge {
+  position:absolute;
+  top:16px;
+  right:16px;
+
+  background:#22c55e;
+
+  color:white;
+
+  padding:8px 12px;
+
+  border-radius:999px;
+
+  font-size:12px;
 }
