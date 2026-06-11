@@ -63,6 +63,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Kredit belum cukup" }, { status: 400 });
     }
 
+    const normalizedLink =
+  body.googleFormLink.startsWith("http://") ||
+  body.googleFormLink.startsWith("https://")
+    ? body.googleFormLink
+    : `https://${body.googleFormLink}`;
+
     const survey = await prisma.survey.create({
       data: {
         userId: user.id,
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
         category: body.category,
         targetRespondent: body.targetRespondent,
         deadline: body.deadline ? new Date(body.deadline) : null,
-        googleFormLink: body.googleFormLink,
+        googleFormLink: normalizedLink,
       },
     });
 

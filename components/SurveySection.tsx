@@ -54,7 +54,12 @@ export default function SurveySection() {
       body: JSON.stringify({ surveyId: survey.id }),
     });
 
-    window.open(survey.googleFormLink, "_blank");
+    const link = survey.googleFormLink.startsWith("http://") ||
+  survey.googleFormLink.startsWith("https://")
+  ? survey.googleFormLink
+  : `https://${survey.googleFormLink}`;
+
+window.open(link, "_blank", "noopener,noreferrer");
 
     setTimeout(() => {
       setClaimableSurveys((prev) =>

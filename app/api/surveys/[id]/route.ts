@@ -74,6 +74,12 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json({ message: "User tidak ditemukan" }, { status: 404 });
     }
 
+    const normalizedLink =
+  body.googleFormLink.startsWith("http://") ||
+  body.googleFormLink.startsWith("https://")
+    ? body.googleFormLink
+    : `https://${body.googleFormLink}`;
+
     const result = await prisma.survey.updateMany({
       where: {
         id: surveyId,
@@ -86,7 +92,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         category: body.category,
         targetRespondent: body.targetRespondent,
         deadline: body.deadline ? new Date(body.deadline) : null,
-        googleFormLink: body.googleFormLink,
+        googleFormLink: normalizedLink,
       },
     });
 
