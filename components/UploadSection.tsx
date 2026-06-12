@@ -7,7 +7,7 @@ export default function UploadSection() {
     title: "",
     description: "",
     category: "",
-    targetRespondent: "",
+    kriteriaTargetResponden: "",
     deadline: "",
     googleFormLink: "",
   });

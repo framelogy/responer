@@ -34,9 +34,18 @@ export default function WelcomeModal() {
           Kredit bisa didapatkan dengan mengisi survei orang lain.
         </p>
 
+        <div className="welcomeNotice">
+          <strong>Balas Bantu</strong>
+          <span>
+            Jangan lupa aktif membantu permintaan Balas Bantu. Semakin rajin
+            kamu membalas bantuan, persentase badge kamu bisa naik dan surveimu
+            berpeluang mendapat prioritas lebih baik di beranda.
+          </span>
+        </div>
+
         <p>
-          Pastikan login terlebih dahulu agar data survei dan kredit kamu
-          tersimpan dengan aman.
+          Pastikan login terlebih dahulu agar data survei, kredit, dan progres
+          Balas Bantu kamu tersimpan dengan aman.
         </p>
 
         <p>

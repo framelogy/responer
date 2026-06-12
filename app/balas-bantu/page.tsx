@@ -1,12 +1,10 @@
 import Header from "../../components/Header";
-import ProfileSection from "../../components/ProfileSection";
 import BalasBantuInbox from "../../components/BalasBantuInbox";
 
-export default function ProfilePage() {
+export default function BalasBantuPage() {
   return (
     <>
       <Header />
-      <ProfileSection />
       <BalasBantuInbox />
     </>
   );

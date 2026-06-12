@@ -18,6 +18,7 @@ export default function Header() {
         <Link href="/surveys">Survei</Link>
         <Link href="/upload">Upload</Link>
         <Link href="/profile">Profil</Link>
+        <Link href="/balas-bantu">Balas Bantu</Link>
       </nav>
 
       {session ? (

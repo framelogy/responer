@@ -9,18 +9,28 @@ type Survey = {
   description: string | null;
   category: string | null;
   targetRespondent: string | null;
+  deadline: string | null;
   googleFormLink: string;
   isClaimed?: boolean;
   isOwner?: boolean;
+  reciprocityScore?: number | null;
+  reciprocityBadge?: string;
 };
 
 export default function SurveySection() {
   const router = useRouter();
+
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
   const [claimedSurveyIds, setClaimedSurveyIds] = useState<number[]>([]);
   const [claimableSurveys, setClaimableSurveys] = useState<number[]>([]);
+
+  const [balasBantuSurvey, setBalasBantuSurvey] = useState<Survey | null>(null);
+  const [balasBantuTitle, setBalasBantuTitle] = useState("");
+  const [balasBantuLink, setBalasBantuLink] = useState("");
+  const [balasBantuNote, setBalasBantuNote] = useState("");
+  const [sendingBalasBantu, setSendingBalasBantu] = useState(false);
 
   useEffect(() => {
     fetch("/api/surveys")
@@ -28,9 +38,7 @@ export default function SurveySection() {
       .then((data: Survey[]) => {
         setSurveys(data);
         setClaimedSurveyIds(
-          data
-            .filter((survey) => survey.isClaimed)
-            .map((survey) => survey.id)
+          data.filter((survey) => survey.isClaimed).map((survey) => survey.id)
         );
       });
   }, []);
@@ -47,23 +55,75 @@ export default function SurveySection() {
     return matchSearch && matchCategory;
   });
 
-  async function openSurvey(survey: Survey) {
-    await fetch("/api/surveys/click", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ surveyId: survey.id }),
+  function normalizeLink(link: string) {
+    if (link.startsWith("http://") || link.startsWith("https://")) {
+      return link;
+    }
+
+    return `https://${link}`;
+  }
+
+  function getSurveyStatus(deadline: string | null) {
+    if (!deadline) {
+      return {
+        label: "Aktif",
+        className: "statusActive",
+      };
+    }
+
+    const today = new Date();
+    const deadlineDate = new Date(deadline);
+
+    today.setHours(0, 0, 0, 0);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return {
+        label: "Expired",
+        className: "statusExpired",
+      };
+    }
+
+    if (diffDays <= 3) {
+      return {
+        label: `Hampir deadline · H-${diffDays}`,
+        className: "statusWarning",
+      };
+    }
+
+    return {
+      label: "Aktif",
+      className: "statusActive",
+    };
+  }
+
+  function formatDeadline(deadline: string | null) {
+    if (!deadline) return "Tidak ada deadline";
+
+    return new Date(deadline).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
+  }
 
-    const link = survey.googleFormLink.startsWith("http://") ||
-  survey.googleFormLink.startsWith("https://")
-  ? survey.googleFormLink
-  : `https://${survey.googleFormLink}`;
-
-window.open(link, "_blank", "noopener,noreferrer");
+  async function recordSurveyClick(surveyId: number) {
+    try {
+      await fetch("/api/surveys/click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ surveyId }),
+      });
+    } catch (error) {
+      console.error("CLICK_SURVEY_ERROR:", error);
+    }
 
     setTimeout(() => {
       setClaimableSurveys((prev) =>
-        prev.includes(survey.id) ? prev : [...prev, survey.id]
+        prev.includes(surveyId) ? prev : [...prev, surveyId]
       );
     }, 60000);
   }
@@ -87,25 +147,61 @@ window.open(link, "_blank", "noopener,noreferrer");
   }
 
   async function deleteSurvey(surveyId: number) {
-  const yakin = confirm("Yakin mau hapus survei ini?");
+    const yakin = confirm("Yakin mau hapus survei ini?");
 
-  if (!yakin) return;
+    if (!yakin) return;
 
-  const res = await fetch(`/api/surveys/${surveyId}`, {
-    method: "DELETE",
-  });
+    const res = await fetch(`/api/surveys/${surveyId}`, {
+      method: "DELETE",
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    alert(data.message || "Gagal menghapus survei");
-    return;
+    if (!res.ok) {
+      alert(data.message || "Gagal menghapus survei");
+      return;
+    }
+
+    setSurveys((prev) => prev.filter((survey) => survey.id !== surveyId));
+    alert(data.message || "Survey berhasil dihapus");
   }
 
-  setSurveys((prev) => prev.filter((survey) => survey.id !== surveyId));
+  async function sendBalasBantu(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-  alert(data.message || "Survey berhasil dihapus");
-}
+    if (!balasBantuSurvey) return;
+
+    setSendingBalasBantu(true);
+
+    const res = await fetch("/api/balas-bantu", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sourceSurveyId: balasBantuSurvey.id,
+        title: balasBantuTitle,
+        googleFormLink: balasBantuLink,
+        note: balasBantuNote,
+      }),
+    });
+
+    const data = await res.json();
+
+    setSendingBalasBantu(false);
+
+    if (!res.ok) {
+      alert(data.message || "Gagal mengirim Balas Bantu");
+      return;
+    }
+
+    alert(data.message || "Permintaan Balas Bantu berhasil dikirim");
+
+    setBalasBantuSurvey(null);
+    setBalasBantuTitle("");
+    setBalasBantuLink("");
+    setBalasBantuNote("");
+  }
 
   return (
     <section className="pageSection">
@@ -136,51 +232,153 @@ window.open(link, "_blank", "noopener,noreferrer");
       </div>
 
       <div className="surveyGrid">
-        {filtered.map((survey) => (
-          <article
-            className={`surveyCard ${
-              claimedSurveyIds.includes(survey.id) ? "surveyCardClaimed" : ""
-            }`}
-            key={survey.id}
-          >
-            <span className="badge">
-              {survey.category || "Tanpa Kategori"}
-            </span>
+        {filtered.map((survey) => {
+          const status = getSurveyStatus(survey.deadline);
 
-            <h3>{survey.title}</h3>
-            <p>{survey.description}</p>
-            <small>{survey.targetRespondent}</small>
+          return (
+            <article
+              className={`surveyCard ${
+                claimedSurveyIds.includes(survey.id) ? "surveyCardClaimed" : ""
+              }`}
+              key={survey.id}
+            >
+              <div className="surveyTopRow">
+                <span className="badge">
+                  {survey.category || "Tanpa Kategori"}
+                </span>
 
-            <div className="cardActions">
-              <button onClick={() => openSurvey(survey)}>Buka Survei</button>
+                <span className={`surveyStatus ${status.className}`}>
+                  {status.label}
+                </span>
+              </div>
 
-              <button
-                disabled={
-                  claimedSurveyIds.includes(survey.id) ||
-                  !claimableSurveys.includes(survey.id)
-                }
-                onClick={() => claimSurvey(survey.id)}
-              >
-                {claimedSurveyIds.includes(survey.id)
-                  ? "Sudah Diisi"
-                  : "Sudah Mengisi"}
-              </button>
+              <p className="reciprocityNote">
+                Reputasi Balas Bantu:{" "}
+                <strong>
+                  {survey.reciprocityScore === null ||
+                  survey.reciprocityScore === undefined
+                    ? "Baru"
+                    : `${survey.reciprocityScore}% · ${survey.reciprocityBadge}`}
+                </strong>
+              </p>
+
+              <h3>{survey.title}</h3>
+
+              <p>{survey.description || "Tidak ada deskripsi."}</p>
+
+              <div className="surveyMeta">
+                <div>
+                  <span>Kriteria Responden</span>
+                  <strong>
+                    {survey.targetRespondent || "Tidak dicantumkan"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Deadline</span>
+                  <strong>{formatDeadline(survey.deadline)}</strong>
+                </div>
+              </div>
+
+              <div className="cardActions">
+                <a
+                  className="surveyActionLink"
+                  href={normalizeLink(survey.googleFormLink)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => recordSurveyClick(survey.id)}
+                >
+                  Buka Survei
+                </a>
+
+                <button
+                  disabled={
+                    claimedSurveyIds.includes(survey.id) ||
+                    !claimableSurveys.includes(survey.id)
+                  }
+                  onClick={() => claimSurvey(survey.id)}
+                >
+                  {claimedSurveyIds.includes(survey.id)
+                    ? "Sudah Diisi"
+                    : "Sudah Mengisi"}
+                </button>
 
                 {survey.isOwner && (
-    <>
-      <button onClick={() => router.push(`/surveys/edit/${survey.id}`)}>
-        Edit
-      </button>
+                  <>
+                    <button
+                      onClick={() => router.push(`/surveys/edit/${survey.id}`)}
+                    >
+                      Edit
+                    </button>
 
-      <button onClick={() => deleteSurvey(survey.id)}>
-        Delete
-      </button>
-    </>
-  )}
-            </div>
-          </article>
-        ))}
+                    <button onClick={() => deleteSurvey(survey.id)}>
+                      Delete
+                    </button>
+                  </>
+                )}
+
+                {!survey.isOwner && claimedSurveyIds.includes(survey.id) && (
+                  <button onClick={() => setBalasBantuSurvey(survey)}>
+                    Minta Balas Bantu
+                  </button>
+                )}
+              </div>
+            </article>
+          );
+        })}
       </div>
+
+      {balasBantuSurvey && (
+        <div className="balasBantuOverlay">
+          <form className="balasBantuModal" onSubmit={sendBalasBantu}>
+            <h2>Minta Balas Bantu</h2>
+
+            <p>
+              Kamu sudah membantu survey:
+              <strong> {balasBantuSurvey.title}</strong>
+            </p>
+
+            <label>
+              Judul Survey Kamu
+              <input
+                value={balasBantuTitle}
+                onChange={(e) => setBalasBantuTitle(e.target.value)}
+                placeholder="Contoh: Survey Pengembangan Aplikasi Mahasiswa"
+                required
+              />
+            </label>
+
+            <label>
+              Link Survey Kamu
+              <input
+                value={balasBantuLink}
+                onChange={(e) => setBalasBantuLink(e.target.value)}
+                placeholder="https://forms.gle/..."
+                required
+              />
+            </label>
+
+            <label>
+              Catatan Opsional
+              <textarea
+                value={balasBantuNote}
+                onChange={(e) => setBalasBantuNote(e.target.value)}
+                placeholder="Contoh: Tolong isi kalau kamu mahasiswa aktif yaa"
+              />
+            </label>
+
+            <div className="cardActions">
+              <button type="submit" disabled={sendingBalasBantu}>
+                {sendingBalasBantu ? "Mengirim..." : "Kirim Permintaan"}
+              </button>
+
+              <button type="button" onClick={() => setBalasBantuSurvey(null)}>
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </section>
   );
 }
